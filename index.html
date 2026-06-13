@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pick food</title>
+  <style>
+    :root {
+      --ink: #27211d;
+      --muted: #806f66;
+      --paper: #fff9ef;
+      --card: rgba(255, 252, 246, 0.92);
+      --red: #e5533d;
+      --gold: #f2b544;
+      --rose: #ff9ab0;
+      --blue: #41a7da;
+      --steel: #6d7787;
+      --green: #5d9469;
+      --line: rgba(39, 33, 29, 0.12);
+      --shadow: 0 22px 70px rgba(82, 40, 24, 0.14);
+      --radius: 28px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: "Heiti SC", "STHeiti", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(circle at 12% 12%, rgba(255, 154, 176, 0.32), transparent 25%),
+        radial-gradient(circle at 88% 4%, rgba(65, 167, 218, 0.25), transparent 28%),
+        radial-gradient(circle at 82% 84%, rgba(242, 181, 68, 0.26), transparent 26%),
+        linear-gradient(135deg, #fff5df 0%, #f7eadf 48%, #edf7ff 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.18;
+      background-image:
+        linear-gradient(rgba(39, 33, 29, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(39, 33, 29, 0.08) 1px, transparent 1px);
+      background-size: 34px 34px;
+      mask-image: linear-gradient(to bottom, #000, transparent 82%);
+    }
+
+    button { font: inherit; }
+
+    .app {
+      width: min(1100px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 18px 0 48px;
+      position: relative;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-size: clamp(22px, 3vw, 34px);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      color: var(--red);
+    }
+
+    .date-pill {
+      padding: 9px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.62);
+      color: var(--muted);
+      font-size: 13px;
+      white-space: pre-line;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; animation: rise 420ms ease both; }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .lottery-stage {
+      min-height: 490px;
+      border-radius: 36px;
+      padding: clamp(22px, 4vw, 44px);
+      background: url("hellokitty.jpg") center/cover no-repeat;
+      border: 1px solid rgba(255, 255, 255, 0.74);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* 毛玻璃遮罩层 */
+    .lottery-stage::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      backdrop-filter: blur(18px) saturate(1.4);
+      -webkit-backdrop-filter: blur(18px) saturate(1.4);
+      background:
+        linear-gradient(110deg, rgba(255, 255, 255, 0.55), rgba(255, 249, 239, 0.62)),
+        radial-gradient(circle at 8% 14%, rgba(255, 154, 176, 0.32), transparent 28%),
+        radial-gradient(circle at 88% 18%, rgba(65, 167, 218, 0.28), transparent 28%);
+      z-index: 0;
+    }
+
+    .mascot-field {
+      display: none;
+    }
+
+    .mascot {
+      display: none;
+    }
+
+    .hero-copy {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      margin: 24px auto 22px;
+      text-align: center;
+    }
+
+    .sign-name {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border: 1px solid rgba(229, 83, 61, 0.22);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.68);
+      color: var(--red);
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(22px, 3.8vw, 48px);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      font-family: "ZCOOL XiaoWei", "Songti SC", serif;
+      font-weight: 400;
+      white-space: nowrap;
+    }
+
+    .hero-copy p {
+      margin: 0 auto;
+      max-width: 560px;
+      color: var(--muted);
+      line-height: 1.8;
+      font-size: 16px;
+    }
+
+    .draw-button {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      width: min(210px, 54vw);
+      height: min(210px, 54vw);
+      margin: 22px auto 16px;
+      border: 0;
+      border-radius: 999px;
+      color: #fffdf5;
+      cursor: pointer;
+      background:
+        radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.45), transparent 18%),
+        conic-gradient(from 160deg, #e5533d, #f2b544, #ff9ab0, #41a7da, #e5533d);
+      box-shadow: 0 28px 70px rgba(229, 83, 61, 0.28), inset 0 0 0 12px rgba(255, 255, 255, 0.2);
+      transition: transform 200ms ease, filter 200ms ease;
+    }
+
+    .draw-button:hover { transform: translateY(-4px) scale(1.015); filter: saturate(1.1); }
+
+    .draw-inner {
+      width: calc(100% - 42px);
+      height: calc(100% - 42px);
+      border-radius: 999px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      background: rgba(120, 45, 27, 0.34);
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      text-align: center;
+      backdrop-filter: blur(5px);
+      gap: 2px;
+    }
+
+    .draw-inner span {
+      display: block;
+      font-size: clamp(13px, 2.2vw, 15px); white-space: nowrap;
+      color: #fffdf5;
+      line-height: 1.4;
+      text-shadow: 0 1px 5px rgba(0,0,0,0.18);
+      line-height: 1.55;
+      opacity: 0.95;
+    }
+
+    .tag-panel,
+    .pick-panel {
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 26px;
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      box-shadow: 0 12px 38px rgba(82, 40, 24, 0.08);
+    }
+
+    .panel-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      font-weight: 900;
+      font-size: 18px;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .tag {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 9px 14px;
+      background: rgba(255, 255, 255, 0.64);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 180ms ease;
+      font-size: 14px;
+    }
+
+    .tag.active {
+      color: #fff;
+      border-color: var(--red);
+      background: var(--red);
+      box-shadow: 0 10px 24px rgba(229, 83, 61, 0.2);
+    }
+
+    .pick-list {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .mini-pick {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.58);
+      border: 1px solid var(--line);
+    }
+
+    .mini-img {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      font-size: 30px;
+      background: linear-gradient(135deg, rgba(242,181,68,.25), rgba(255,154,176,.18));
+      flex: 0 0 auto;
+    }
+
+    .mini-pick b { display: block; font-size: 14px; }
+    .mini-pick small { color: var(--muted); font-size: 12px; }
+
+    .empty-state {
+      padding: 18px;
+      border: 1px dashed var(--line);
+      border-radius: 18px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.45);
+    }
+
+    .result-shell {
+      display: grid;
+      gap: 18px;
+    }
+
+    .result-header {
+      border-radius: 30px;
+      padding: 22px;
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.74);
+      box-shadow: var(--shadow);
+    }
+
+    .result-header-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: start;
+      margin-bottom: 10px;
+    }
+
+    .back-btn,
+    .confirm-btn,
+    .subtle-btn {
+      border: 0;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: transform 160ms ease, box-shadow 160ms ease;
+    }
+
+    .back-btn,
+    .subtle-btn {
+      padding: 9px 13px;
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+
+    .confirm-btn {
+      padding: 14px 22px;
+      background: linear-gradient(135deg, var(--red), #f28b50);
+      color: #fff;
+      font-weight: 900;
+      box-shadow: 0 16px 34px rgba(229, 83, 61, 0.22);
+    }
+
+    .back-btn:hover,
+    .confirm-btn:hover,
+    .subtle-btn:hover { transform: translateY(-2px); }
+
+    .result-header h2 {
+      margin: 0;
+      font-size: clamp(28px, 5vw, 54px);
+      line-height: 1;
+      letter-spacing: -0.05em;
+    }
+
+    .result-header p { margin: 10px 0 0; color: var(--muted); }
+
+    .meal-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .dish-card {
+      min-height: 284px;
+      position: relative;
+      padding: 12px 12px 54px;
+      border-radius: 26px;
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.74);
+      box-shadow: 0 16px 46px rgba(82, 40, 24, 0.1);
+      overflow: hidden;
+    }
+
+    .dish-img {
+      height: 140px;
+      border-radius: 20px;
+      display: grid;
+      place-items: center;
+      font-size: 66px;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,.65), transparent 28%),
+        linear-gradient(135deg, rgba(242, 181, 68, 0.28), rgba(255, 154, 176, 0.18), rgba(65, 167, 218, 0.18));
+      margin-bottom: 13px;
+    }
+
+    .dish-card h3 {
+      margin: 0 0 8px;
+      font-size: 21px;
+      letter-spacing: -0.03em;
+    }
+
+    .dish-card small {
+      display: inline-flex;
+      margin-right: 6px;
+      margin-bottom: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255,255,255,.64);
+      border: 1px solid var(--line);
+      font-size: 12px;
+    }
+
+    .card-actions {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tiny-btn {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: rgba(255,255,255,.72);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 160ms ease;
+    }
+
+    .tiny-btn.pick {
+      border-color: rgba(229, 83, 61, 0.24);
+      color: var(--red);
+      font-weight: 900;
+    }
+
+    .tiny-btn.picked {
+      background: var(--red);
+      color: #fff;
+      border-color: var(--red);
+    }
+
+    .tiny-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(39,33,29,.08); }
+
+    .selected-panel {
+      padding: 18px;
+      border-radius: 26px;
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.74);
+      box-shadow: 0 14px 40px rgba(82, 40, 24, 0.08);
+    }
+
+    .selected-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .selected-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(229, 83, 61, 0.1);
+      color: var(--red);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 20;
+      background: rgba(32, 21, 16, 0.42);
+      backdrop-filter: blur(8px);
+    }
+
+    .overlay.show { display: flex; }
+
+    .shake-box,
+    .confirm-box {
+      width: min(460px, 92vw);
+      border-radius: 32px;
+      padding: 28px;
+      text-align: center;
+      background: #fff9ef;
+      border: 1px solid rgba(255,255,255,.8);
+      box-shadow: 0 28px 80px rgba(0,0,0,.2);
+    }
+
+    .bamboo-cup {
+      width: 150px;
+      height: 188px;
+      margin: 0 auto 18px;
+      position: relative;
+      transform-origin: 50% 85%;
+      animation: cupShake 0.32s linear infinite;
+    }
+
+    .cup-body {
+      position: absolute;
+      inset: 46px 28px 0;
+      border-radius: 22px 22px 42px 42px;
+      background: linear-gradient(135deg, #9b5931, #d38b4f);
+      box-shadow: inset 0 0 0 8px rgba(255,255,255,.15);
+    }
+
+    .stick {
+      position: absolute;
+      bottom: 80px;
+      width: 12px;
+      height: 120px;
+      border-radius: 999px;
+      background: linear-gradient(#ffe0a3, #b96d37);
+      transform-origin: bottom;
+      box-shadow: 0 4px 12px rgba(0,0,0,.12);
+    }
+
+    .stick.one { left: 54px; transform: rotate(-18deg); animation: stickOne .38s linear infinite; }
+    .stick.two { left: 72px; transform: rotate(2deg); animation: stickTwo .35s linear infinite; }
+    .stick.three { left: 92px; transform: rotate(19deg); animation: stickThree .42s linear infinite; }
+
+    @keyframes cupShake {
+      0%, 100% { transform: rotate(-8deg) translateX(-4px); }
+      50% { transform: rotate(8deg) translateX(4px); }
+    }
+
+    @keyframes stickOne { 50% { transform: rotate(-28deg) translateY(-10px); } }
+    @keyframes stickTwo { 50% { transform: rotate(4deg) translateY(-15px); } }
+    @keyframes stickThree { 50% { transform: rotate(29deg) translateY(-8px); } }
+
+    .shake-box h3,
+    .confirm-box h3 { margin: 0 0 8px; font-size: 28px; }
+    .shake-box p,
+    .confirm-box p { color: var(--muted); margin: 0 0 16px; line-height: 1.7; }
+
+    .confirm-dishes {
+      display: grid;
+      gap: 8px;
+      margin: 14px 0 18px;
+      text-align: left;
+    }
+
+    .confirm-dish {
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: rgba(229, 83, 61, 0.08);
+      color: var(--ink);
+    }
+
+    @media (max-width: 960px) {
+      .pick-list,
+      .meal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .result-header-top { flex-direction: column; }
+    }
+
+    @media (max-width: 600px) {
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .lottery-stage { min-height: 430px; border-radius: 28px; }
+      /* mascot removed */
+      .draw-button { margin-top: 18px; }
+      .pick-list,
+      .meal-grid { grid-template-columns: 1fr; }
+      .dish-card { min-height: 260px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">🍱 皮克福德·艾瑞达</div>
+      <div class="date-pill" id="topDate"></div>
+    </header>
+
+    <section class="screen active" id="homeScreen">
+      <div class="lottery-stage">
+        <div class="mascot-field">
+<!-- mascot replaced by HelloKitty background -->
+        </div>
+        <div class="hero-copy">
+          <h1>看看今天吃啥好的</h1>
+        </div>
+        <button class="draw-button" id="drawBtn">
+          <span class="draw-inner">
+            <span id="drawLine1">🍱 抽签</span>
+            <span id="drawLine2"></span>
+            <span id="drawLine3"></span>
+          </span>
+        </button>
+      </div>
+
+      <section class="tag-panel">
+        <div class="panel-title"><span>今日倾向</span><small id="tagHint"></small></div>
+        <div class="tags" id="tagList"></div>
+      </section>
+
+      <section class="pick-panel">
+        <div class="panel-title"><span>Pick List</span><small>每日确认的好午饭</small></div>
+        <div id="homePickList"></div>
+      </section>
+    </section>
+
+    <section class="screen" id="resultScreen">
+      <div class="result-shell">
+        <div class="result-header">
+          <div class="result-header-top">
+            <button class="back-btn" id="backHomeBtn">← 回到抽签</button>
+            <button class="subtle-btn" id="rerollMealBtn">🎲 整桌换一批</button>
+          </div>
+          <h2>“好午饭”签位已出</h2>
+          <p id="resultDesc">推荐 3 个菜 + 1 份主食。可以单独换一道，也可以小刘的皮克。</p>
+        </div>
+
+        <div class="meal-grid" id="mealGrid"></div>
+
+        <section class="selected-panel">
+          <div class="panel-title"><span>本次小刘的皮克</span><small>选完后确认今天的好午饭</small></div>
+          <div class="selected-list" id="selectedList"></div>
+          <button class="confirm-btn" id="confirmMealBtn">确认今天的好午饭</button>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <div class="overlay" id="shakeOverlay">
+    <div class="shake-box" id="shakeBox">
+      <div class="bamboo-cup">
+        <div class="stick one"></div>
+        <div class="stick two"></div>
+        <div class="stick three"></div>
+        <div class="cup-body"></div>
+      </div>
+      <h3 id="shakeTitle">摇签中...</h3>
+      <p id="shakeText">今天中午的好饭正在路上，请稍等 2 秒。</p>
+      <button class="confirm-btn" id="showResultBtn" style="display:none">确定，去看签位</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="confirmOverlay">
+    <div class="confirm-box">
+      <h3>确认今天的好午饭！</h3>
+      <p>确认后会回到首页，并更新 Pick List。再抽一次也会覆盖当前选择。</p>
+      <div class="confirm-dishes" id="confirmDishes"></div>
+      <div class="modal-actions">
+        <button class="back-btn" id="cancelConfirmBtn">取消</button>
+        <button class="confirm-btn" id="finalConfirmBtn">确认好午饭</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tags = [
+      { id: 'home', label: '家常菜', hint: '北京家常口味' },
+      { id: 'fatloss', label: '减脂餐', hint: '低卡低脂' },
+      { id: 'soup', label: '有个汤', hint: '热乎舒服' },
+      { id: 'noodle', label: '面食为主', hint: '一碗解决' },
+      { id: 'patient', label: '病号饭', hint: '清淡软烂' },
+      { id: 'protein', label: '高蛋白', hint: '恢复体力' }
+    ];
+
+        // ═══ 50+ 家常菜库（北京、山东、东北、徽菜、广东等） ═══
+    const dishes = [
+      // —— 北京家常风格 ——
+      { name: '京酱肉丝', img: '🍖', cal: 340, type: '高蛋白', tags: ['home', 'protein'] },
+      { name: '乾隆白菜', img: '🥬', cal: 120, type: '凉拌蔬菜', tags: ['home', 'fatloss'] },
+      { name: '木须肉', img: '🥩', cal: 310, type: '北京家常', tags: ['home', 'protein'] },
+      { name: '醋溜土豆丝', img: '🥔', cal: 180, type: '素菜', tags: ['home', 'fatloss'] },
+      { name: '西红柿炒鸡蛋', img: '🍳', cal: 210, type: '家常素菜', tags: ['home', 'fatloss'] },
+      { name: '红烧茄子', img: '🍆', cal: 280, type: '素菜', tags: ['home'] },
+      { name: '涮羊肉轻量版', img: '🥘', cal: 420, type: '高蛋白暖身', tags: ['home', 'protein', 'soup'] },
+      // —— 鲁菜风味 ——
+      { name: '葱烧海参', img: '🍤', cal: 290, type: '鲁菜高蛋白', tags: ['home', 'protein'] },
+      { name: '糖醋鲤鱼', img: '🐟', cal: 380, type: '鱼类高蛋白', tags: ['home', 'protein'] },
+      { name: '山东酥肉', img: '🥩', cal: 340, type: '酥香高蛋白', tags: ['home', 'protein'] },
+      { name: '锅塌豆腐', img: '🧈', cal: 230, type: '鲁菜素', tags: ['home', 'fatloss'] },
+      { name: '奶汤蒲菜', img: '🥣', cal: 160, type: '清淡汤', tags: ['soup', 'patient'] },
+      // —— 东北菜 ——
+      { name: '锅包肉', img: '🍖', cal: 390, type: '高蛋白东北名菜', tags: ['home', 'protein'] },
+      { name: '地三鲜', img: '🍳', cal: 280, type: '家常素菜', tags: ['home'] },
+      { name: '东北大拉皮', img: '🥗', cal: 170, type: '凉拌素食', tags: ['home', 'fatloss'] },
+      { name: '溜肉段', img: '🍖', cal: 350, type: '高蛋白', tags: ['home', 'protein'] },
+      { name: '酸菜白肉', img: '🥬', cal: 310, type: '东北炖菜', tags: ['home', 'soup'] },
+      { name: '绿豆芽炒粉', img: '🍜', cal: 220, type: '素炒', tags: ['home', 'fatloss'] },
+      // —— 徽菜 ——
+      { name: '臭鳜鱼', img: '🐟', cal: 300, type: '徽菜名菜', tags: ['home', 'protein'] },
+      { name: '徽州毛豆腐', img: '🧈', cal: 260, type: '豆制品蛋白', tags: ['home', 'patient'] },
+      { name: '胡适一品锅', img: '🍲', cal: 380, type: '炖菜高蛋白', tags: ['home', 'soup', 'protein'] },
+      // —— 粤菜/广东家常 ——
+      { name: '清蒸鲈鱼', img: '🐟', cal: 220, type: '高蛋白清蒸', tags: ['home', 'protein', 'patient'] },
+      { name: '白切鸡', img: '🍗', cal: 330, type: '粤菜高蛋白', tags: ['home', 'protein'] },
+      { name: '虾仁滑蛋', img: '🍳', cal: 240, type: '高蛋白嫩滑', tags: ['home', 'protein', 'patient'] },
+      { name: '时蔬炒牛肉', img: '🥦', cal: 310, type: '高蛋白', tags: ['home', 'protein'] },
+      { name: '煲仔饭小份版', img: '🍚', cal: 450, type: '主食+蛋白', tags: ['home'] },
+      { name: '芥蓝炒腊味', img: '🥬', cal: 260, type: '粤式小炒', tags: ['home'] },
+      // —— 汤类 & 粥 ——
+      { name: '冬瓜排骨汤', img: '🍲', cal: 180, type: '清淡汤', tags: ['soup', 'patient', 'protein'] },
+      { name: '萝卜炖牛肉', img: '🥕', cal: 320, type: '高蛋白炖品', tags: ['soup', 'home', 'protein'] },
+      { name: '菌菇汤', img: '🍄', cal: 110, type: '素食汤', tags: ['soup', 'fatloss', 'patient'] },
+      { name: '豆腐青菜汤', img: '🥣', cal: 90, type: '清汤', tags: ['soup', 'fatloss', 'patient'] },
+      { name: '番茄蛋花汤', img: '🍅', cal: 100, type: '家常汤', tags: ['soup', 'patient'] },
+      { name: '鲫鱼豆腐汤', img: '🐟', cal: 190, type: '高蛋白汤', tags: ['soup', 'protein'] },
+      { name: '海带排骨汤', img: '🍲', cal: 210, type: '营养汤', tags: ['soup', 'protein'] },
+      { name: '皮蛋瘦肉粥', img: '🥣', cal: 280, type: '粥品', tags: ['patient', 'home'] },
+      // —— 热炒 / 硬菜 / 煎炸 ——
+      { name: '麻婆豆腐', img: '🧈', cal: 260, type: '麻辣豆制品', tags: ['home', 'protein'] },
+      { name: '回锅肉', img: '🥩', cal: 380, type: '川味高蛋白', tags: ['home', 'protein'] },
+      { name: '干煸四季豆', img: '🌱', cal: 190, type: '素炒', tags: ['home', 'fatloss'] },
+      { name: '蒜蓉西兰花', img: '🥦', cal: 130, type: '素菜低脂', tags: ['home', 'fatloss'] },
+      { name: '干炸带鱼', img: '🐟', cal: 310, type: '煎炸蛋白', tags: ['home', 'protein'] },
+      { name: '酱香排骨', img: '🥩', cal: 410, type: '高蛋白硬菜', tags: ['home', 'protein'] },
+      { name: '红烧鸡块', img: '🍗', cal: 350, type: '高蛋白', tags: ['home', 'protein'] },
+      { name: '油焖大虾', img: '🦐', cal: 280, type: '高蛋白海鲜', tags: ['home', 'protein'] },
+      // —— 温和清淡 / 病号饭友好 ——
+      { name: '蒸水蛋', img: '🥚', cal: 140, type: '软嫩蛋白', tags: ['patient', 'fatloss'] },
+      { name: '胡萝卜山药泥', img: '🥕', cal: 160, type: '软烂辅食', tags: ['patient', 'fatloss'] },
+      { name: '鸡蓉粟米羹', img: '🌽', cal: 170, type: '温和汤', tags: ['patient', 'soup'] },
+      { name: '百合炒西芹', img: '🥬', cal: 120, type: '清爽素菜', tags: ['patient', 'fatloss'] },
+      { name: '丝瓜炒蛋', img: '🍳', cal: 160, type: '软嫩素菜', tags: ['patient', 'home'] },
+      // —— 面食类菜品 ——
+      { name: '老北京炸酱面码', img: '🍝', cal: 480, type: '面食蛋白', tags: ['noodle', 'home', 'protein'] },
+      { name: '打卤面（小份）', img: '🍜', cal: 370, type: '面食', tags: ['noodle', 'home'] },
+      { name: '鸡汤馄饨', img: '🥟', cal: 290, type: '面食汤', tags: ['noodle', 'patient', 'soup'] },
+      { name: '肉末茄子盖饭', img: '🍆', cal: 410, type: '盖饭', tags: ['home', 'protein'] },
+    ];
+
+        // ═══ 主食库（15+ 种主食/杂粮） ═══
+    const staples = [
+      { name: '杂粮饭', img: '🍚', cal: 210, type: '主食', tags: ['home', 'fatloss', 'protein'] },
+      { name: '软米饭', img: '🍚', cal: 230, type: '主食', tags: ['patient', 'home'] },
+      { name: '玉米半根', img: '🌽', cal: 120, type: '低脂主食', tags: ['fatloss'] },
+      { name: '葱花饼半张', img: '🫓', cal: 250, type: '面食主食', tags: ['noodle', 'home'] },
+      { name: '手擀面小碗', img: '🍜', cal: 310, type: '面食主食', tags: ['noodle'] },
+      { name: '慢头两个', img: '🥖', cal: 200, type: '面食主食', tags: ['home', 'patient'] },
+      { name: '打卤面', img: '🍝', cal: 350, type: '面食主食', tags: ['noodle', 'home'] },
+      { name: '炸酱面', img: '🍜', cal: 390, type: '面食主食', tags: ['noodle', 'home'] },
+      { name: '烙饼一角', img: '🫓', cal: 230, type: '面食主食', tags: ['noodle', 'home'] },
+      { name: '三鲜水饺8个', img: '🥟', cal: 320, type: '面食主食', tags: ['noodle', 'home'] },
+      { name: '白菜猪肉水饺8个', img: '🥟', cal: 330, type: '面食主食', tags: ['noodle', 'home'] },
+      { name: '潮汕炒米粉', img: '🍝', cal: 370, type: '米粉主食', tags: ['home'] },
+      { name: '肉松饭团', img: '🍙', cal: 280, type: '主食', tags: ['home', 'patient'] },
+      { name: '粽子一个', img: '🫔', cal: 360, type: '主食', tags: ['home'] },
+      { name: '白粥小碗', img: '🥣', cal: 130, type: '主食清淡', tags: ['patient', 'soup'] },
+      { name: '小米粥', img: '🥣', cal: 120, type: '主食清淡', tags: ['patient', 'soup'] },
+      { name: '紫薯半个', img: '🍠', cal: 150, type: '低脂杂粮', tags: ['fatloss'] },
+      { name: '玉米发糕一块', img: '🥮', cal: 180, type: '杂粮主食', tags: ['patient', 'home'] },
+    ];
+
+    const lunarSamples = ['五月廿八', '五月廿九', '六月初一', '六月初二', '六月初三'];
+
+    const fortunePhrases = [
+      '签筒说：今天最适合认真吃一顿。',
+      '签筒说：美食在召唤，不要亏待自己。',
+      '签筒说：天下没有白吃的午饭，但今天可以有！',
+      '签筒说：今天要多吃一点哦！',
+      '签筒说：好饭不怕晚，饿了就该吃。',
+      '签筒说：吃饭是天下第一等大事。',
+      '签筒说：上上签在手，好饭我有。',
+      '签筒说：不吃饱怎么有力气干活。',
+      '签筒说：吃好午饭，下午才有灵魂。',
+      '签筒说：这签可不简单，是好饭签。',
+      '签筒说：今天适合来点特别的。',
+      '签筒说：食运亨通，遇饭则发！',
+    ];
+
+    function randomFortune() {
+      return fortunePhrases[Math.floor(Math.random() * fortunePhrases.length)];
+    }
+    let activeTag = 'home';
+    let currentMeal = [];
+    let pickedItems = [];
+    let confirmedMeal = [];
+    let hasConfirmedToday = false;
+
+    const $ = (id) => document.getElementById(id);
+
+    function todayText() {
+      const now = new Date();
+      return `${now.getMonth() + 1}月${now.getDate()}日`;
+    }
+
+    function getDateStr() {
+      const now = new Date();
+      const lunar = lunarSamples[now.getDate() % lunarSamples.length];
+      return `${now.getMonth() + 1}月${now.getDate()}日，农历${lunar}，易吃好饭！`;
+    }
+
+    function dateLine() {
+      const now = new Date();
+      const lunar = lunarSamples[now.getDate() % lunarSamples.length];
+      return `${todayText()}，农历${lunar}，易吃好饭！`;
+    }
+
+    function showScreen(screenId) {
+      ['homeScreen', 'resultScreen'].forEach(id => $(id).classList.toggle('active', id === screenId));
+    }
+
+    function renderTags() {
+      $('tagList').innerHTML = '';
+      tags.forEach(tag => {
+        const button = document.createElement('button');
+        button.className = `tag ${tag.id === activeTag ? 'active' : ''}`;
+        button.textContent = `${tag.label} · ${tag.hint}`;
+        button.onclick = () => {
+          activeTag = tag.id;
+          renderTags();
+        };
+        $('tagList').appendChild(button);
+      });
+      $('tagHint').textContent = tags.find(tag => tag.id === activeTag).hint;
+    }
+
+    function scoreItem(item) {
+      return item.tags.includes(activeTag) ? 2 : 0;
+    }
+
+    function pickPool(pool, count, avoidNames = []) {
+      return [...pool]
+        .filter(item => !avoidNames.includes(item.name))
+        .map(item => ({ item, score: scoreItem(item) + Math.random() }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, count)
+        .map(row => row.item);
+    }
+
+    function generateMeal() {
+      const selectedDishes = pickPool(dishes, 3);
+      const selectedStaple = pickPool(staples, 1)[0];
+      currentMeal = [...selectedDishes, selectedStaple].map((item, index) => ({ ...item, slot: index }));
+      pickedItems = [];
+      renderMealGrid();
+      renderSelectedList();
+    }
+
+    function replaceOne(slot) {
+      const isStaple = slot === 3;
+      const pool = isStaple ? staples : dishes;
+      const avoidNames = currentMeal.map(item => item.name);
+      const replacement = pickPool(pool, 1, avoidNames)[0] || pool[Math.floor(Math.random() * pool.length)];
+      currentMeal[slot] = { ...replacement, slot };
+      pickedItems = pickedItems.filter(item => item.slot !== slot);
+      renderMealGrid();
+      renderSelectedList();
+    }
+
+    function pickItem(slot) {
+      const item = currentMeal[slot];
+      const exists = pickedItems.some(row => row.slot === slot);
+      if (exists) pickedItems = pickedItems.filter(row => row.slot !== slot);
+      else pickedItems.push(item);
+      renderMealGrid();
+      renderSelectedList();
+    }
+
+    function isPicked(slot) {
+      return pickedItems.some(item => item.slot === slot);
+    }
+
+    function renderMealGrid() {
+      $('mealGrid').innerHTML = '';
+      currentMeal.forEach((item, index) => {
+        const card = document.createElement('article');
+        card.className = 'dish-card';
+        card.innerHTML = `
+          <div class="dish-img">${item.img}</div>
+          <h3>${item.name}</h3>
+          <small>${item.cal}kcal</small><small>${item.type}</small>
+          <div class="card-actions">
+            <button class="tiny-btn" data-action="replace">换一个</button>
+            <button class="tiny-btn pick ${isPicked(index) ? 'picked' : ''}" data-action="pick">${isPicked(index) ? '小刘的皮克' : 'pick'}</button>
+          </div>
+        `;
+        card.querySelector('[data-action="replace"]').onclick = () => replaceOne(index);
+        card.querySelector('[data-action="pick"]').onclick = () => pickItem(index);
+        $('mealGrid').appendChild(card);
+      });
+    }
+
+    function renderSelectedList() {
+      $('selectedList').innerHTML = '';
+      if (!pickedItems.length) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.textContent = '还没有皮克。可以从上面的卡片里选择喜欢的菜。';
+        $('selectedList').appendChild(empty);
+        return;
+      }
+      pickedItems
+        .sort((a, b) => a.slot - b.slot)
+        .forEach(item => {
+          const chip = document.createElement('span');
+          chip.className = 'selected-chip';
+          chip.textContent = `${item.img} ${item.name}`;
+          $('selectedList').appendChild(chip);
+        });
+    }
+
+    function renderHomePickList() {
+      const box = $('homePickList');
+      box.innerHTML = '';
+      if (!confirmedMeal.length) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.textContent = '今天还没有确认的午饭。抽一签，给小刘安排一顿好饭。';
+        box.appendChild(empty);
+        return;
+      }
+      const list = document.createElement('div');
+      list.className = 'pick-list';
+      confirmedMeal.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'mini-pick';
+        row.innerHTML = `
+          <div class="mini-img">${item.img}</div>
+          <div><b>${item.name}</b><small>${item.cal}kcal · ${item.type}</small></div>
+        `;
+        list.appendChild(row);
+      });
+      box.appendChild(list);
+    }
+
+    function openShake() {
+      $('shakeOverlay').classList.add('show');
+      $('showResultBtn').style.display = 'none';
+      $('shakeTitle').textContent = '摇签中...';
+      $('shakeText').textContent = '今天中午的好饭正在路上，请稍等 2 秒。';
+      setTimeout(() => {
+        $('shakeTitle').textContent = '"好午饭"签位已出';
+        $('shakeText').textContent = '';
+        $('showResultBtn').style.display = 'inline-flex';
+      }, 2200);
+    }
+
+    function openConfirm() {
+      if (!pickedItems.length) {
+        alert('先皮克至少一道菜，再确认今天的好午饭。');
+        return;
+      }
+      $('confirmDishes').innerHTML = '';
+      pickedItems
+        .sort((a, b) => a.slot - b.slot)
+        .forEach(item => {
+          const row = document.createElement('div');
+          row.className = 'confirm-dish';
+          row.textContent = `${item.img} ${item.name} · ${item.cal}kcal · ${item.type}`;
+          $('confirmDishes').appendChild(row);
+        });
+      $('confirmOverlay').classList.add('show');
+    }
+
+    function confirmMeal() {
+      confirmedMeal = [...pickedItems].sort((a, b) => a.slot - b.slot);
+      hasConfirmedToday = true;
+      $('confirmOverlay').classList.remove('show');
+      renderHomePickList();
+      showScreen('homeScreen');
+    }
+
+    function init() {
+      $('topDate').textContent = dateLine();
+      const parts = getDateStr().split('');
+      let lunar = '';
+      for (let i = 0; i < parts.length && !/^[一-龥]/.test(parts[i]); i++) lunar += parts[i];
+      // getDateStr returns 'x月x日，农历xxx，易吃好饭！'
+      const match = getDateStr().match(/^(.+)，农历(.+)，(.+)$/);
+      if (match) {
+        $('drawLine1').textContent = '🍱 ' + match[1];
+        $('drawLine2').textContent = '农历' + match[2];
+        $('drawLine3').textContent = '✨ ' + match[3];
+      }
+      // drawTitle removed, skip
+      renderTags();
+      renderHomePickList();
+
+      $('drawBtn').onclick = openShake;
+      $('showResultBtn').onclick = () => {
+        $('shakeOverlay').classList.remove('show');
+        generateMeal();
+        showScreen('resultScreen');
+      };
+      $('backHomeBtn').onclick = () => showScreen('homeScreen');
+      $('rerollMealBtn').onclick = generateMeal;
+      $('confirmMealBtn').onclick = openConfirm;
+      $('cancelConfirmBtn').onclick = () => $('confirmOverlay').classList.remove('show');
+      $('finalConfirmBtn').onclick = confirmMeal;
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
